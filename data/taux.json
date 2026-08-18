@@ -1,22 +1,530 @@
 {
   "version": 2,
   "date": "2026-08-18",
-  "source": "Grille officielle Amazon.fr - Seller Central (GF9K4BWLZXRPC62U), verifiee le 18/08/2026",
+  "source": "Grille officielle Amazon.fr - Seller Central (GF9K4BWLZXRPC62U). Barèmes a paliers + frais de gestion minimum verifiee le 18/08/2026",
   "taux": {
-    "Électronique (7 %)": 7,
-    "Accessoires électroniques (15 %)": 15,
-    "Vêtements (15 %)": 15,
-    "Chaussures, sacs (15 %)": 15,
-    "Maison & Cuisine (15 %)": 15,
-    "Jouets & Jeux (15 %)": 15,
-    "Beauté (15 %)": 15,
-    "Hygiène & Santé (15 %)": 15,
-    "Sports & Loisirs (15 %)": 15,
-    "Bricolage & Jardin (15 %)": 15,
-    "Auto & Moto (15 %)": 15,
-    "Bureau (15 %)": 15,
-    "Livres & Médias (15 %)": 15,
-    "Jeux vidéo & Consoles (8 %)": 8,
-    "Informatique (7 %)": 7
+    "Accessoires pour Appareils Amazon": {
+      "tranches": [
+        [
+          null,
+          45
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Auto et Moto, sports mecaniques": {
+      "tranches": [
+        [
+          50.0,
+          15
+        ],
+        [
+          null,
+          9
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Bebe et puericulture": {
+      "tranches": [
+        [
+          10.0,
+          8
+        ],
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Poussettes et equipement de securite bebes": {
+      "tranches": [
+        [
+          10.0,
+          8
+        ],
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Sacs a dos et sacs a main": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Beaute, sante et soins du corps": {
+      "tranches": [
+        [
+          10.0,
+          8
+        ],
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Gants de travail et de securite": {
+      "tranches": [
+        [
+          10.0,
+          8
+        ],
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Bieres, vins et spiritueux": {
+      "tranches": [
+        [
+          null,
+          10
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Livres": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": null
+    },
+    "Fournitures pro, industrielles et scientifiques": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Vetements et accessoires": {
+      "tranches": [
+        [
+          15.0,
+          5
+        ],
+        [
+          20.0,
+          10
+        ],
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Fournitures electriques et energetiques commerciales": {
+      "tranches": [
+        [
+          null,
+          12
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Appareils compacts": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Informatique": {
+      "tranches": [
+        [
+          null,
+          7
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Produits electroniques": {
+      "tranches": [
+        [
+          null,
+          7
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Accessoires de cyclisme": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Accessoires electroniques": {
+      "tranches": [
+        [
+          100.0,
+          15
+        ],
+        [
+          null,
+          8
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Accessoires Imprimante et scanner": {
+      "tranches": [
+        [
+          100.0,
+          15
+        ],
+        [
+          null,
+          8
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Optique": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Protection de la vue": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Chaussures": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Electromenager de taille standard": {
+      "tranches": [
+        [
+          null,
+          7
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Meubles": {
+      "tranches": [
+        [
+          200.0,
+          15
+        ],
+        [
+          null,
+          10
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Accessoires pour meubles": {
+      "tranches": [
+        [
+          null,
+          13
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Epicerie et epicerie fine": {
+      "tranches": [
+        [
+          10.0,
+          5
+        ],
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": null
+    },
+    "Handmade": {
+      "tranches": [
+        [
+          null,
+          12
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Produits de la categorie Maison": {
+      "tranches": [
+        [
+          20.0,
+          8
+        ],
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Cuisine": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Linge de maison et tapis": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Bijoux": {
+      "tranches": [
+        [
+          250.0,
+          20
+        ],
+        [
+          null,
+          5
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Jardin": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Accessoires et bagages": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Matelas": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Musique, video et DVD": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": null
+    },
+    "Instruments de musique et Sono": {
+      "tranches": [
+        [
+          null,
+          12
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Fournitures scolaires et de bureau": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Materiaux d'emballage": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Animalerie": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Vetements et aliments pour animaux": {
+      "tranches": [
+        [
+          10.0,
+          5
+        ],
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Logiciels": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": null
+    },
+    "Sports et Loisirs": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Pneus": {
+      "tranches": [
+        [
+          null,
+          7
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Outils et bricolage": {
+      "tranches": [
+        [
+          null,
+          13
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Accessoires pour portes, fenetres et douches": {
+      "tranches": [
+        [
+          null,
+          13
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Adhesifs et colliers de serrage pour la maison": {
+      "tranches": [
+        [
+          null,
+          13
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Jeux et jouets": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Jeux video et accessoires de jeu": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": null
+    },
+    "Consoles de jeux video": {
+      "tranches": [
+        [
+          null,
+          8
+        ]
+      ],
+      "min_fee": null
+    },
+    "Vitamines, mineraux et complements alimentaires": {
+      "tranches": [
+        [
+          10.0,
+          5
+        ],
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Montres": {
+      "tranches": [
+        [
+          250.0,
+          15
+        ],
+        [
+          null,
+          5
+        ]
+      ],
+      "min_fee": 0.3
+    },
+    "Divers": {
+      "tranches": [
+        [
+          null,
+          15
+        ]
+      ],
+      "min_fee": 0.3
+    }
   }
 }
