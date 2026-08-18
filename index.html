@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPS de sourcing Amazon FR</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --card:#ffffff; --ink:#1a202c; --muted:#5a6472;
+    --border:#dbe2ea; --ok:#1f9d55; --bad:#d64545; --warn:#b7791f; --accent:#c60b1e;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--ink); padding:24px; line-height:1.5;}
+  .wrap{max-width:920px; margin:0 auto;}
+  h1{font-size:1.4rem; margin-bottom:4px;}
+  .sub{color:var(--muted); font-size:.9rem; margin-bottom:16px;}
+  .notice{background:#fff8e6; border:1px solid #f0d48e; color:#7a5b12; border-radius:8px; padding:10px 12px; font-size:.85rem; margin-bottom:16px;}
+  .urlbar{display:flex; gap:8px; margin-bottom:16px;}
+  .urlbar input{flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:.95rem;}
+  .urlbar button{background:var(--accent); color:#fff; border:0; border-radius:8px; padding:0 18px; font-size:.95rem; cursor:pointer; white-space:nowrap;}
+  .urlbar button:disabled{opacity:.6; cursor:wait;}
+  .fetchmsg{font-size:.85rem; margin:-8px 0 16px; min-height:1.2em;}
+  .fetchmsg.ok{color:var(--ok);} .fetchmsg.err{color:var(--bad);} .fetchmsg.info{color:var(--muted);}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media(max-width:680px){.grid{grid-template-columns:1fr;}}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px;}
+  .card h2{font-size:1rem; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:8px;}
+  label{display:block; font-size:.8rem; color:var(--muted); margin:10px 0 4px;}
+  input,select{width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:.95rem; background:#fff;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .hint{font-size:.72rem; color:var(--muted); margin-top:3px;}
+  .scanblock{margin-bottom:4px;}
+  .scanrow{display:flex; gap:8px; align-items:center;}
+  .scanrow button{background:var(--accent); color:#fff; border:0; border-radius:6px; padding:8px 12px; font-size:.85rem; cursor:pointer; white-space:nowrap;}
+  .scanrow input{flex:1;}
+  .rateshead{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px;}
+  .rateshead button{background:var(--card); border:1px dashed var(--accent); color:var(--accent); border-radius:6px; padding:7px 12px; font-size:.85rem; cursor:pointer;}
+  .rateshead button.ghost{background:var(--card); border:1px solid var(--border); color:var(--muted); border-radius:6px; padding:7px 12px; font-size:.85rem; cursor:pointer;}
+  #ratesPanel{margin-top:4px; max-height:260px; overflow-y:auto;}
+  .rate-item{display:grid; grid-template-columns:1fr 90px; gap:8px; align-items:center; margin-bottom:6px;}
+  .rate-item span{font-size:.8rem;}
+  .rate-item .mini{font-size:.68rem; color:var(--muted); grid-column:1 / 3; margin-top:-4px;}
+  .result{border-radius:10px; padding:18px; margin-top:16px;}
+  .result.go{background:#e9f9ef; border:1px solid #b7e3c6;}
+  .result.nogo{background:#fdeeee; border:1px solid #f0c4c4;}
+  .verdict{font-size:1.6rem; font-weight:700; letter-spacing:.5px;}
+  .result.go .verdict{color:var(--ok);} .result.nogo .verdict{color:var(--bad);}
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:12px;}
+  .stat{background:#fff; border:1px solid var(--border); border-radius:8px; padding:10px; text-align:center;}
+  .stat .v{font-size:1.15rem; font-weight:700; white-space:nowrap;}
+  .stat .l{font-size:.72rem; color:var(--muted); margin-top:2px;}
+  .checks{margin-top:12px; font-size:.88rem;}
+  .checks div{display:flex; align-items:center; gap:8px; padding:4px 0;}
+  .dot{width:9px; height:9px; border-radius:50%; flex:0 0 9px;}
+  .warn-banner{background:#fff3d6; border:1px solid #edd9a0; color:#7a5b12; border-radius:8px; padding:8px 12px; font-size:.85rem; margin-top:8px;}
+  .savebar{margin-top:14px; display:flex; align-items:center; gap:10px;}
+  .savebar button{background:var(--ok); color:#fff; border:0; border-radius:8px; padding:8px 16px; font-size:.9rem; cursor:pointer;}
+  .savebar .saved{color:var(--ok); font-size:.85rem;}
+  .hist{margin-top:16px;}
+  .hist h2{font-size:1rem; margin-bottom:8px; border-bottom:1px solid var(--border); padding-bottom:8px;}
+  .hist table{width:100%; border-collapse:collapse; font-size:.85rem;}
+  .hist th,.hist td{padding:6px 8px; border-bottom:1px solid var(--border); text-align:left; white-space:nowrap;}
+  .hist td.titre{max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .hist .go{color:var(--ok); font-weight:700;}
+  .hist .nogo{color:var(--bad); font-weight:700;}
+  .hist .act button{background:none; border:none; color:var(--accent); cursor:pointer; font-size:.8rem; padding:2px 4px; text-decoration:underline;}
+  .hist .act button.del{color:var(--bad);}
+  .hist .tools{margin:8px 0; display:flex; gap:8px;}
+  .hist .tools button{background:var(--card); border:1px solid var(--border); border-radius:6px; padding:5px 10px; font-size:.8rem; cursor:pointer;}
+  .empty{color:var(--muted); font-size:.85rem; padding:10px 0;}
+  .foot{color:var(--muted); font-size:.75rem; margin-top:18px; text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>GPS de sourcing Amazon FR</h1>
+  <p class="sub">v2.2 · Verdict Go / No-Go pour arbitrage · Barèmes officiels complets (51 catégories, paliers + frais min)</p>
+  <div class="notice">
+    ⚠️ Les barèmes sont les <b>frais officiels Amazon.fr</b>, vérifiés et mis à jour automatiquement depuis
+    le repo dédié (bouton « 🔄 » ci-dessous). Grille officielle :
+    <a href="https://sellercentral.amazon.fr/help/hub/reference/external/GF9K4BWLZXRPC62U" target="_blank">grille officielle des frais Amazon.fr</a>.
+    Le verdict est une AIDE, pas une garantie.
+  </div>
+
+  <div class="urlbar">
+    <input id="url" type="text" placeholder="Colle un lien Amazon.fr (optionnel) : https://www.amazon.fr/dp/..." list="urls">
+    <datalist id="urls"></datalist>
+    <button id="btnFetch" onclick="openAmazon()">🔗 Ouvrir sur Amazon</button>
+  </div>
+  <div id="fetchmsg" class="fetchmsg"></div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Produit</h2>
+
+      <div class="scanblock">
+        <label>Code-barres (EAN) — optionnel, accélère la recherche Amazon</label>
+        <div class="scanrow">
+          <button id="btnScan" onclick="startScan()">📷 Scanner</button>
+          <input id="ean" type="text" inputmode="numeric" placeholder="Ex : 4005556098713">
+          <button onclick="searchAmazonEan()">🔎 Chercher</button>
+        </div>
+        <video id="scanVid" autoplay playsinline muted style="display:none; max-width:100%; border-radius:8px; border:1px solid var(--border);"></video>
+        <div id="scanMsg" class="hint">Le scan marche sur téléphone Android (Chrome). Sans caméra : tape l'EAN ou utilise le bouton Chercher.</div>
+      </div>
+
+      <label for="titre">Titre du produit</label>
+      <input id="titre" type="text" placeholder="Atelier de dessin Ravensburger...">
+
+      <label for="prixA">Prix d'achat constate (€ TTC, magasin/site)</label>
+      <input id="prixA" type="text" inputmode="decimal" placeholder="ex : 14,99">
+
+      <label for="prixV">Prix de vente constate sur Amazon (€ TTC, Buy Box)</label>
+      <input id="prixV" type="text" inputmode="decimal" placeholder="ex : 35,00">
+
+      <label for="cat">Categorie du produit</label>
+      <input id="cat" type="text" list="catList" placeholder="Tape pour chercher : Auto, Jouets, Livres..." autocomplete="off">
+      <datalist id="catList"></datalist>
+      <div class="hint" id="catHint">Tape un mot-cle pour filtrer les 51 categories.</div>
+
+      <div class="row2">
+        <div>
+          <label for="note">Note produit (0 à 5)</label>
+          <input id="note" type="text" inputmode="decimal" placeholder="ex : 4,2">
+        </div>
+        <div>
+          <label for="vendeurs">Nb de vendeurs actifs</label>
+          <input id="vendeurs" type="text" inputmode="numeric" placeholder="ex : 4">
+          <div class="hint">1-2 = exclusivite (danger) · plusieurs = OK</div>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div>
+          <label for="bsr">BSR (rang de vente)</label>
+          <input id="bsr" type="text" inputmode="numeric" placeholder="ex : 12000">
+          <div class="hint">Plus petit = plus vendu. Idee : BSR faible</div>
+        </div>
+        <div>
+          <label for="gated">Marque verrouillee (gating) ?</label>
+          <select id="gated">
+            <option value="0">Non, vendable</option>
+            <option value="1">Oui, non debloquee</option>
+            <option value="0.5">Oui mais debloquee (factures OK)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div>
+          <label for="amazonSur">Amazon est-il vendeur sur la fiche ?</label>
+          <select id="amazonSur">
+            <option value="0">Non / inconnu</option>
+            <option value="1">Oui, Amazon est present</option>
+          </select>
+        </div>
+        <div>
+          <label for="poids">Poids du colis (kg, pour l'estim)</label>
+          <input id="poids" type="text" inputmode="decimal" placeholder="ex : 0,45">
+        </div>
+      </div>
+
+      <label for="lien">Lien produit (pour tes notes)</label>
+      <input id="lien" type="text" placeholder="https://www.amazon.fr/dp/...">
+    </div>
+
+    <div class="card">
+      <h2>Frais & regles</h2>
+      <div class="rateshead">
+        <button type="button" id="btnRates" onclick="toggleRates()">⚙️ Barêmes (51 categories, modifiables)</button>
+        <button type="button" class="ghost" id="btnRatesUpdate" onclick="autoUpdateTaux(false)">🔄 Mettre a jour</button>
+        <button type="button" class="ghost" id="btnRatesReset" onclick="resetRates()" style="display:none">↺ Défaut</button>
+      </div>
+      <div id="ratesPanel" style="display:none">
+        <div id="rateList"></div>
+      </div>
+      <div class="row2">
+        <div>
+          <label for="fraisLog">Frais logistique Amazon (€/unite)</label>
+          <input id="fraisLog" type="text" inputmode="decimal" value="0">
+          <div class="hint">Ex. carton ~5 € / nbre d'unites</div>
+        </div>
+        <div>
+          <label for="fraisDivers">Autres frais (€/unite)</label>
+          <input id="fraisDivers" type="text" inputmode="decimal" value="0">
+        </div>
+      </div>
+      <label for="tvaMode">Regime TVA</label>
+      <select id="tvaMode">
+        <option value="0">Auto-entreprise non assujettie (TTC)</option>
+        <option value="1">Entreprise assujettie (calcul HT)</option>
+      </select>
+      <div class="row2">
+        <div>
+          <label for="margeCible">Seuil marge nette (%)</label>
+          <input id="margeCible" type="text" inputmode="numeric" value="30">
+        </div>
+        <div>
+          <label for="noteMini">Note minimale</label>
+          <input id="noteMini" type="text" inputmode="decimal" value="3,5">
+        </div>
+      </div>
+      <h2 style="margin-top:16px;">Aperçu multi-pays (optionnel)</h2>
+      <div class="hint">Meme produit vendu plus cher ailleurs en Europe = opportunite d'arbitrage.</div>
+      <div class="row2">
+        <div>
+          <label for="pxDE">Allemagne (€)</label>
+          <input id="pxDE" type="text" inputmode="decimal" placeholder="ex : 44,50">
+        </div>
+        <div>
+          <label for="pxIT">Italie (€)</label>
+          <input id="pxIT" type="text" inputmode="decimal" placeholder="ex : 33,90">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="result"></div>
+  <div class="savebar" id="savebar" style="display:none">
+    <button onclick="saveProduct()" id="btnSave">💾 Enregistrer ce produit</button>
+    <span class="saved" id="savedMsg"></span>
+  </div>
+
+  <div class="hist card" id="hist">
+    <h2>Historique (du navigateur) <span id="histCount"></span></h2>
+    <div class="tools">
+      <button onclick="exportCSV()">⬇️ Exporter CSV</button>
+      <button onclick="clearHist()">🗑️ Vider l'historique</button>
+    </div>
+    <div id="histBody"></div>
+    <p class="hint">Enregistre dans ce navigateur uniquement (pas de serveur). Exporte le CSV pour garder une trace sur ton PC.</p>
+  </div>
+
+  <p class="foot">v2.2 · Estimation : la marge reelle depend des frais exacts, du statut fiscal et du volume. Pas un conseil financier.</p>
+</div>
+
+<script>
+/* ================= Grille officielle complete (embed, fallback) ================= */
+// 51 categories, tranches (paliers) + frais de gestion minimum.
+const DEFAULT_TAUX = {
+  "Accessoires pour Appareils Amazon": {"tranches": [[null, 45]], "min_fee": 0.30},
+  "Auto et Moto, sports mecaniques": {"tranches": [[50.0, 15], [null, 9]], "min_fee": 0.30},
+  "Bebe et puericulture": {"tranches": [[10.0, 8], [null, 15]], "min_fee": 0.30},
+  "Poussettes et equipement de securite bebes": {"tranches": [[10.0, 8], [null, 15]], "min_fee": 0.30},
+  "Sacs a dos et sacs a main": {"tranches": [[null, 15]], "min_fee": 0.30},
+  "Beaute, sante et soins du corps": {"tranches": [[10.0, 8], [null, 15]], "min_fee": 0.30},
+  "Gants de travail et de securite": {"tranches": [[10.0, 8], [null, 15]], "min_fee": 0.30},
+  "Bieres, vins et spiritueux": {"tranches": [[null, 10]], "min_fee": 0.30},
+  "Livres": {"tranches": [[null, 15]], "min_fee": null},
+  "Fournitures pro, industrielles et scientifiques": {"tranches": [[null, 15]], "min_fee": 0.30},
+  "Vetements et accessoires": {"tranches": [[15.0, 5], [20.0, 10], [null, 15]], "min_fee": 0.30},
+  "Fournitures electriques et energetiques commerciales": {"tranches": [[null, 12]], "min_fee": 0.30},
+  "Appareils compacts": {"tranches": [[null, 15]], "min_fee": 0.30},
+  "Informatique": {"tranches": [[null, 7]], "min_fee": 0.30},
+  "Produits electroniques": {"tranches": [[null, 7]], "min_fee": 0.30},
+  "Accessoires de cyclisme": {"tranches": [[null, 15]], "min_fee": 0.30},
+  "Accessoires electroniques": {"tranches": [[100.0, 15], [null, 8]], "min_fee": 0.30},
+  "Accessoires Imprimante et scanner": {"tranches": [[100.0, 15], [null, 8]], "min_fee": 0.30},
+  "Optique": {"tranches": [[null, 15]], "min_fee": 0.30},
+  "Protection de la vue": {"tranches": [[null, 15]], "min_fee": 0.30},
+  "Chaussures": {"tranches": [[null, 15]], "min_fee": 0.30},
+  "Electromenager de taille standard": {"tranches": [[null, 7]], "min_fee": 0.30},
+  "Meubles": {"tranches": [[200.0, 15], [null, 10]], "min_fee": 0.30},
+  "Accessoires pour meubles": {"tranches": [[null, 13]], "min_fee": 0.30},
+  "Epicerie et epicerie fine": {"tranches": [[10.0, 5], [null, 15]], "min_fee": null},
+  "Handmade": {"tranches": [[null, 12]], "min_fee": 0.30},
+  "Produits de la categorie Maison": {"tranches": [[20.0, 8], [null, 15]], "min_fee": 0.30},
+  "Cuisine": {"tranches": [[null, 15]], "min_fee": 0.30},
+  "Linge de maison et tapis": {"tranches": [[null, 15]], "min_fee": 0.30},
+  "Bijoux": {"tranches": [[250.0, 20], [null, 5]], "min_fee": 0.30},
+  "Jardin": {"tranches": [[null, 15]], "min_fee": 0.30},
+  "Accessoires et bagages": {"tranches": [[null, 15]], "min_fee": 0.30},
+  "Matelas": {"tranches": [[null, 15]], "min_fee": 0.30},
+  "Musique, video et DVD": {"tranches": [[null, 15]], "min_fee": null},
+  "Instruments de musique et Sono": {"tranches": [[null, 12]], "min_fee": 0.30},
+  "Fournitures scolaires et de bureau": {"tranches": [[null, 15]], "min_fee": 0.30},
+  "Materiaux d'emballage": {"tranches": [[null, 15]], "min_fee": 0.30},
+  "Animalerie": {"tranches": [[null, 15]], "min_fee": 0.30},
+  "Vetements et aliments pour animaux": {"tranches": [[10.0, 5], [null, 15]], "min_fee": 0.30},
+  "Logiciels": {"tranches": [[null, 15]], "min_fee": null},
+  "Sports et Loisirs": {"tranches": [[null, 15]], "min_fee": 0.30},
+  "Pneus": {"tranches": [[null, 7]], "min_fee": 0.30},
+  "Outils et bricolage": {"tranches": [[null, 13]], "min_fee": 0.30},
+  "Accessoires pour portes, fenetres et douches": {"tranches": [[null, 13]], "min_fee": 0.30},
+  "Adhesifs et colliers de serrage pour la maison": {"tranches": [[null, 13]], "min_fee": 0.30},
+  "Jeux et jouets": {"tranches": [[null, 15]], "min_fee": 0.30},
+  "Jeux video et accessoires de jeu": {"tranches": [[null, 15]], "min_fee": null},
+  "Consoles de jeux video": {"tranches": [[null, 8]], "min_fee": null},
+  "Vitamines, mineraux et complements alimentaires": {"tranches": [[10.0, 5], [null, 15]], "min_fee": 0.30},
+  "Montres": {"tranches": [[250.0, 15], [null, 5]], "min_fee": 0.30},
+  "Divers": {"tranches": [[null, 15]], "min_fee": 0.30}
+};
+let rates = JSON.parse(JSON.stringify(DEFAULT_TAUX));
+let lastCalc = null;
+
+/* ================= Mise a jour auto des taux ================= */
+const TAUX_URL = 'https://cdn.jsdelivr.net/gh/yoanlengletcontact-hash/gps-sourcing@main/data/taux.json';
+
+function normalizeRemote(raw){
+  // accepte : {"taux": {...}} avec chaque cle = soit objet {tranches,min_fee},
+  // soit ancien format nombre (15) -> convertit.
+  const out = {};
+  const src = (raw && raw.taux) ? raw.taux : raw;
+  if(!src || typeof src !== 'object') return null;
+  for(const k of Object.keys(src)){
+    const v = src[k];
+    if(typeof v === 'object' && Array.isArray(v.tranches)){
+      out[k] = { tranches: v.tranches.map(t => {
+        const maxRaw = t[0];
+        const max = (maxRaw === null || maxRaw === undefined || maxRaw === '') ? null : Number(maxRaw);
+        return [max, Number(t[1])];
+      }),
+                 min_fee: v.min_fee === undefined ? 0.30 : (v.min_fee === null ? null : Number(v.min_fee)) };
+    } else if(typeof v === 'number'){
+      out[k] = { tranches: [[null, v]], min_fee: 0.30 };
+    }
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+async function autoUpdateTaux(silent){
+  const msg = document.getElementById('scanMsg');
+  try{
+    const r = await fetch(TAUX_URL + '?v=' + Date.now(), {cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    const norm = normalizeRemote(data);
+    if(!norm) throw new Error('format');
+    rates = norm;
+    renderRates(); initCat();
+    calc();
+    if(!silent && msg){
+      msg.innerHTML = '<b>Barêmes mis a jour automatiquement</b> (grille du ' + (data.date||'?') + ', ' + Object.keys(norm).length + ' categories). Source : repo gps-sourcing.';
+    }
+    return data;
+  }catch(e){
+    if(!silent && msg){
+      msg.innerHTML = 'Mise a jour auto impossible (pas de connexion ou service indisponible). Les baremes actuels restent valides.';
+    }
+    return null;
+  }
+}
+
+/* ================= Gestion des categories / baremes ================= */
+function categorieLabel(cat){
+  const t = rates[cat];
+  if(!t) return cat;
+  const pct = commPctAt(cat, 40); // taux effectif sur un exemple a 40 €
+  return cat + ' (' + pct + ' %)';
+}
+function commPctAt(cat, price){
+  const s = rates[cat] || {tranches:[[null,15]], min_fee:0.30};
+  // taux de la tranche contenant price
+  let prev = 0;
+  for(const [max, pct] of s.tranches){
+    if(max === null || price <= max) return pct;
+    prev = max;
+  }
+  const last = s.tranches[s.tranches.length-1];
+  return last ? last[1] : 15;
+}
+function calcCommission(price, spec){
+  // commission par tranches (paliers)
+  spec = spec || {tranches:[[null,15]], min_fee:0.30};
+  let total = 0, prev = 0;
+  for(const [max, pct] of spec.tranches){
+    const seuil = (max === null) ? Infinity : max;
+    if(price > seuil){
+      total += (seuil - prev) * pct / 100;
+      prev = seuil;
+    } else {
+      total += (price - prev) * pct / 100;
+      break;
+    }
+  }
+  const min = spec.min_fee === null ? 0 : (spec.min_fee || 0);
+  return Math.max(total, min);
+}
+function baremeText(spec){
+  if(!spec) return '';
+  const parts = spec.tranches.map(([max, pct])=>{
+    return pct + ' % ' + (max===null ? 'au-delà' : '≤ '+max+' €');
+  });
+  const minTxt = spec.min_fee===null ? 'sans minimum' : 'min '+spec.min_fee.toFixed(2)+' €';
+  return parts.join(' puis ') + ' · ' + minTxt;
+}
+
+function initCat(){
+  const input = document.getElementById('cat');
+  const current = input.value;
+  const dl = document.getElementById('catList');
+  dl.innerHTML = '';
+  Object.keys(rates).forEach(k=>{
+    const o = document.createElement('option');
+    o.value = k;
+    dl.appendChild(o);
+  });
+  if(current && rates[current]) input.value = current;
+}
+function resolveCat(userInput){
+  // retourne la cle exacte si identique, sinon la premiere cle contenant
+  // la saisie (recherche insensible a la casse), sinon null.
+  const s = (userInput||'').trim().toLowerCase();
+  if(!s) return null;
+  if(rates[userInput]) return userInput;
+  for(const k of Object.keys(rates)){
+    if(k.toLowerCase().includes(s)) return k;
+  }
+  return null;
+}
+function toggleRates(){
+  const panel = document.getElementById('ratesPanel');
+  const btn = document.getElementById('btnRates');
+  const reset = document.getElementById('btnRatesReset');
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  reset.style.display = open ? 'none' : 'inline-block';
+  btn.textContent = open ? '⚙️ Barêmes (51 categories, modifiables)' : '⚙️ Masquer les barêmes';
+  if(!open) renderRates();
+}
+function resetRates(){
+  rates = JSON.parse(JSON.stringify(DEFAULT_TAUX));
+  renderRates(); initCat(); calc();
+  const m = document.getElementById('scanMsg');
+  if(m) m.innerHTML = 'Barêmes remis sur les valeurs officielles par défaut.';
+}
+function renderRates(){
+  const box = document.getElementById('rateList');
+  box.innerHTML = '';
+  Object.keys(rates).forEach(k=>{
+    const spec = rates[k];
+    const row = document.createElement('div');
+    row.className='rate-item';
+    const sp = document.createElement('span');
+    sp.textContent = k;
+    const mini = document.createElement('div');
+    mini.className='mini';
+    mini.textContent = baremeText(spec);
+    const inp = document.createElement('input');
+    inp.type='text'; inp.inputMode='decimal'; inp.style.width='100%';
+    // affiche le taux de la tranche unique si un seul palier, sinon taux a 40€
+    inp.value = (spec.tranches.length===1) ? spec.tranches[0][1] : commPctAt(k, 40);
+    inp.title = baremeText(spec);
+    inp.addEventListener('input',()=>{
+      // modification manuelle : remplace le bareme par un palier unique
+      const v = parseFloat(inp.value.replace(',','.'));
+      if(!isNaN(v) && v>=0 && v<=100){
+        rates[k] = { tranches: [[null, v]], min_fee: spec.min_fee };
+        calc();
+      }
+    });
+    row.appendChild(sp); row.appendChild(inp); row.appendChild(mini);
+    box.appendChild(row);
+  });
+}
+
+function fill(id, v){
+  if(v === null || v === undefined || v === '') return;
+  const el = document.getElementById(id);
+  const s = String(v).replace('.', ',');
+  if(el) el.value = s;
+}
+
+async function openAmazon(){
+  const url = document.getElementById('url').value.trim();
+  const msg = document.getElementById('fetchmsg');
+  const btn = document.getElementById('btnFetch');
+  if(!url){ msg.className='fetchmsg err'; msg.textContent='Colle d\'abord un lien Amazon.'; return; }
+  if(!/amazon\.(fr|com|de|it|es|co\.uk)/i.test(url)){
+    msg.className='fetchmsg err';
+    msg.textContent='Ce lien ne ressemble pas a un lien Amazon (verifie le format amazon.fr/dp/...).';
+    return;
+  }
+  btn.disabled = true;
+  document.getElementById('lien').value = url;
+  const win = window.open(url, '_blank');
+  msg.className='fetchmsg info';
+  if(win){
+    msg.textContent='Produit ouvert sur Amazon dans un autre onglet. Regarde et remplis : prix de vente (Buy Box), note, nb de vendeurs, BSR. (La lecture auto de ces donnees est bloquee par Amazon — la saisie est fiable.)';
+  }else{
+    // le navigateur a bloque la popup (ou l'apercu ne permet pas les onglets) :
+    // on propose un coup a copier-coller, fiable partout.
+    showLinkFallback(msg, url, 'L\'ouverture automatique est bloquée ici. Copie le lien ci-dessous et colle-le dans la barre d\'adresse pour ouvrir le produit sur Amazon :');
+  }
+  btn.disabled = false;
+}
+
+function money(x){
+  return x.toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
+}
+function par(f){
+  const raw = document.getElementById(f).value;
+  return parseFloat(String(raw).replace(/\s/g,'').replace(',','.'));
+}
+function fmt(x){
+  return x.toLocaleString('fr-FR',{maximumFractionDigits:1})+' %';
+}
+
+function calc(){
+  const prixA = par('prixA');
+  const prixV = par('prixV');
+  const catRaw = document.getElementById('cat').value;
+  const cat   = resolveCat(catRaw) || catRaw;
+  const note  = par('note');
+  const vend  = par('vendeurs');
+  const gated = parseFloat(document.getElementById('gated').value);
+  const bsr   = par('bsr');
+  const aSur  = parseFloat(document.getElementById('amazonSur').value);
+  const fLog  = par('fraisLog')||0;
+  const fDiv  = par('fraisDivers')||0;
+  const seuil = par('margeCible')||30;
+  const noteMin = par('noteMini')||3.5;
+
+  const out = document.getElementById('result');
+  if(isNaN(prixA)||isNaN(prixV)||prixV<=0){
+    out.innerHTML=''; return;
+  }
+
+  const spec = rates[cat] || {tranches:[[null,15]], min_fee:0.30};
+  const commission = calcCommission(prixV, spec);
+  const fraisTot = commission + fLog + fDiv;
+  const margeNet = prixV - prixA - fraisTot;
+  const margePct = (margeNet / prixV) * 100;
+  const tauxEff = (commission / prixV) * 100;
+
+  const checks = [];
+  if(margePct >= seuil) checks.push({ok:true,  t:`Marge nette ${fmt(margePct)} >= ${seuil} %`});
+  else checks.push({ok:false, t:`Marge nette ${fmt(margePct)} < ${seuil} %`});
+  if(!isNaN(note)){
+    if(note >= noteMin) checks.push({ok:true,  t:`Note ${note.toLocaleString('fr-FR')} >= ${noteMin.toLocaleString('fr-FR')}`});
+    else checks.push({ok:false, t:`Note < ${noteMin.toLocaleString('fr-FR')}`});
+  }
+  if(!isNaN(vend)){
+    if(vend >= 3 && vend <= 12) checks.push({ok:true, t:`${vend} vendeurs : marche partage, OK`});
+    else if(vend < 3) checks.push({ok:false, t:`${vend} vendeur(s) : risque d'exclusivite/private label`});
+    else checks.push({ok:false, t:`${vend} vendeurs : concurrence elevee`});
+  }
+  if(gated===1) checks.push({ok:false, t:'Marque verrouillee et non debloquee : tu ne pourras pas vendre'});
+  else if(gated===0.5) checks.push({ok:true, t:'Marque debloquee (documents fournis)'});
+  else checks.push({ok:true, t:'Marque vendable'});
+  if(!isNaN(bsr)){
+    if(bsr < 30000) checks.push({ok:true,  t:`BSR ${bsr} : produit qui se vend (a verifier en categorie)`});
+    else if(bsr < 50000) checks.push({ok:true, t:`BSR ${bsr} : moyen, a surveiller`});
+    else checks.push({ok:false, t:`BSR ${bsr} : risque de faible demande`});
+  }
+  if(aSur===1) checks.push({ok:false, t:'Amazon est vendeur sur la fiche : difficile de rivaliser (sauf tres bon prix)'});
+  else checks.push({ok:true, t:'Amazon absent ou inconnu : OK'});
+
+  const nogo = checks.some(c=>!c.ok);
+  out.className = 'result ' + (nogo?'nogo':'go');
+  const vtxt = nogo ? 'NO-GO' : 'GO';
+
+  let multiPays = '';
+  const pxDE = par('pxDE'), pxIT = par('pxIT');
+  if(!isNaN(pxDE) || !isNaN(pxIT)){
+    const elems = [];
+    if(!isNaN(pxDE) && pxDE > prixV) elems.push(`Allemagne ${money(pxDE)} (+${Math.round((pxDE-prixV)/prixV*100)} %)`);
+    if(!isNaN(pxIT) && pxIT > prixV) elems.push(`Italie ${money(pxIT)} (+${Math.round((pxIT-prixV)/prixV*100)} %)`);
+    if(elems.length) multiPays = `<div class="warn-banner">💡 Opportunite Europe : vendre plus cher en ${elems.join(' et ')}</div>`;
+  }
+
+  out.innerHTML = `
+    <div class="verdict">${vtxt}</div>
+    <div class="stats">
+      <div class="stat"><div class="v">${fmt(margePct)}</div><div class="l">Marge nette</div></div>
+      <div class="stat"><div class="v">${money(margeNet)}</div><div class="l">Gain estime / unite</div></div>
+      <div class="stat"><div class="v">${money(fraisTot)}</div><div class="l">Frais Amazon estimes</div></div>
+      <div class="stat"><div class="v">${fmt(tauxEff)}</div><div class="l">Commission effective</div></div>
+    </div>
+    <div class="checks">
+      ${checks.map(c=>`<div><span class="dot" style="background:${c.ok?'var(--ok)':'var(--bad)'}"></span>${c.t}</div>`).join('')}
+    </div>
+    <div class="hint" style="margin-top:8px;">Barême : ${baremeText(spec)}</div>
+    ${multiPays}`;
+
+  lastCalc = { prixA, prixV, cat, note, vend, gated, bsr, aSur, margeNet, margePct, tauxEff, verdict: nogo ? 'NO-GO' : 'GO' };
+  document.getElementById('savebar').style.display = (prixA>0 && prixV>0) ? 'flex' : 'none';
+}
+
+/* ================= Historique (localStorage) ================= */
+let histStore = [];
+const HIST_KEY = 'gps_history_v1';
+try { histStore = JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); } catch(e){ histStore = []; }
+function persistHist(){ try { localStorage.setItem(HIST_KEY, JSON.stringify(histStore)); } catch(e){ } }
+function saveProduct(){
+  const titre = document.getElementById('titre').value.trim() || '(sans titre)';
+  const lien  = document.getElementById('lien').value.trim();
+  if(!lastCalc || lastCalc.prixA<=0 || lastCalc.prixV<=0) return;
+  const item = {
+    date: new Date().toLocaleString('fr-FR', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}),
+    titre, lien, prixA: lastCalc.prixA, prixV: lastCalc.prixV, cat: lastCalc.cat,
+    note: lastCalc.note, vend: lastCalc.vend, margePct: lastCalc.margePct,
+    margeNet: lastCalc.margeNet, verdict: lastCalc.verdict
+  };
+  histStore.unshift(item);
+  if(histStore.length > 500) histStore = histStore.slice(0,500);
+  persistHist(); renderHist();
+  const m = document.getElementById('savedMsg');
+  m.textContent = 'Enregistré ✓';
+  setTimeout(()=>m.textContent='', 2500);
+}
+function renderHist(){
+  document.getElementById('histCount').textContent = histStore.length ? '(' + histStore.length + ')' : '';
+  const body = document.getElementById('histBody');
+  if(!histStore.length){ body.innerHTML = '<div class="empty">Aucun produit enregistré pour l\'instant.</div>'; return; }
+  body.innerHTML = `<table><tr><th>Date</th><th>Produit</th><th>Achat</th><th>Vente</th><th>Marge</th><th>Verdict</th><th></th></tr>` +
+    histStore.map((it,i)=>`
+      <tr>
+        <td>${it.date}</td>
+        <td class="titre" title="${(it.titre||'').replace(/"/g,'&quot;')}">${(it.titre||'').replace(/</g,'&lt;')}</td>
+        <td>${money(it.prixA)}</td><td>${money(it.prixV)}</td><td>${fmt(it.margePct)}</td>
+        <td class="${it.verdict==='GO'?'go':'nogo'}">${it.verdict}</td>
+        <td class="act"><button onclick="reloadProduct(${i})">Rappeler</button><button class="del" onclick="delHist(${i})">✕</button></td>
+      </tr>`).join('') + '</table>';
+}
+function reloadProduct(i){
+  const it = histStore[i]; if(!it) return;
+  fill('prixA', it.prixA); fill('prixV', it.prixV); fill('note', it.note); fill('vendeurs', it.vend);
+  fill('lien', it.lien || ''); fill('titre', it.titre || '');
+  if(it.cat){
+    const input = document.getElementById('cat');
+    if(input && (rates[it.cat] || resolveCat(it.cat))) input.value = it.cat;
+  }
+  calc(); window.scrollTo({top:0, behavior:'smooth'});
+}
+function delHist(i){ histStore.splice(i,1); persistHist(); renderHist(); }
+function clearHist(){ if(!histStore.length) return; if(confirm('Vider tout l\'historique ?')){ histStore=[]; persistHist(); renderHist(); } }
+function exportCSV(){
+  if(!histStore.length){ alert('Rien à exporter.'); return; }
+  const head = 'date;titre;lien;achat_euros;vente_euros;categorie;note;vendeurs;marge_pct;gain_euros;verdict';
+  const rows = histStore.map(it=>[
+    it.date, String(it.titre||'').replace(/;/g,','), it.lien||'', it.prixA, it.prixV,
+    String(it.cat||'').replace(/;/g,','), it.note, it.vend,
+    it.margePct.toFixed(1).replace('.',','), it.margeNet.toFixed(2).replace('.',','), it.verdict
+  ].join(';'));
+  const blob = new Blob(['\uFEFF'+head+'\n'+rows.join('\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'gps-sourcing-historique.csv'; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ================= Scan de code-barres (v2) ================= */
+let scanStream = null;
+let scanActive = false;
+function isValidEAN(code){
+  if(!/^\d{8}$|^\d{13}$/.test(code)) return false;
+  const digits = code.split('').map(Number);
+  const sum = digits.slice(0,-1).reduce((acc,d,i)=> acc + d*(i%2===0 ? 1 : 3), 0);
+  const check = (10 - (sum % 10)) % 10;
+  return check === digits[digits.length-1];
+}
+function stopScan(){
+  scanActive = false;
+  if(scanStream){ scanStream.getTracks().forEach(t=>t.stop()); scanStream=null; }
+  const v = document.getElementById('scanVid'); if(v) v.style.display='none';
+  const btn = document.getElementById('btnScan'); if(btn) btn.textContent='📷 Scanner';
+}
+async function startScan(){
+  const msg = document.getElementById('scanMsg');
+  const v = document.getElementById('scanVid');
+  const btn = document.getElementById('btnScan');
+  if(scanActive){ stopScan(); return; }
+  if(!('BarcodeDetector' in window)){
+    msg.innerHTML = '<b>Scan camera non disponible sur ce navigateur/appareil.</b> Utilise la saisie manuelle : tappe le code EAN (8 ou 13 chiffres) puis « 🔎 Chercher ».';
+    return;
+  }
+  try{ scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); }
+  catch(e){ msg.textContent = 'Acces camera refuse ou impossible ici. Tape le code EAN a la main puis « 🔎 Chercher ».'; return; }
+  v.srcObject = scanStream; v.style.display = 'block';
+  await v.play().catch(()=>{});
+  scanActive = true; btn.textContent = '⏹ Stopper';
+  msg.textContent = 'Pointe la camera vers le code-barres du produit...';
+  let detector = null;
+  try{ detector = new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf']}); }
+  catch(e){
+    // repli : certains navigateurs n'acceptent pas la liste complete
+    try{ detector = new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128']}); }
+    catch(e2){ msg.textContent = 'Detecteur non initialise : saisis le code a la main.'; return; }
+  }
+  const tick = async () => {
+    if(!scanActive) return;
+    try{
+      const codes = await detector.detect(v);
+      if(codes && codes.length){
+        const raw = String(codes[0].rawValue || '').trim();
+        if(raw){
+          document.getElementById('ean').value = raw;
+          stopScan();
+          applyScannedCode(raw, msg);
+          return;
+        }
+      }
+    }catch(e){}
+    requestAnimationFrame(tick);
+  };
+  tick();
+}
+function applyScannedCode(raw, msg){
+  // Distingue EAN/UPC (chiffres) d'un code Amazon (ASIN/FNSKU alphanumerique).
+  const isDigits = /^[\d]{8,14}$/.test(raw);
+  const looksAsin = /^[A-Z0-9]{10}$/.test(raw.replace(/[^A-Z0-9]/g,'')) && /^[A-Z]/.test(raw);
+  if(isDigits && isValidEAN(raw)){
+    document.getElementById('ean').value = raw;
+    msg.innerHTML = `<b>Code EAN lu : ${raw}</b> — recherche du nom du produit... (clique « 🔎 Chercher » quand prêt)`;
+    resolveEanName(raw).then(name=>{
+      if(name){
+        const search = 'https://www.amazon.fr/s?k=' + encodeURIComponent(name);
+        document.getElementById('lien').value = search;
+        if(!document.getElementById('titre').value.trim()){
+          document.getElementById('titre').value = name;
+        }
+        msg.innerHTML = `<b>Code EAN lu : ${raw}</b> → <b>${name}</b>. Clique « 🔎 Chercher » (le lien utilise le nom du produit).`;
+      } else {
+        document.getElementById('lien').value = 'https://www.amazon.fr/s?k=' + raw;
+        msg.innerHTML = `
+          <b>Code EAN lu : ${raw}</b> — rien dans la base ouverte (produit import/ancien probable).
+          Si tu connais le nom (emballage ou recherche Icecat/fabricant/revendeur) :
+          <div style="display:flex;gap:6px;margin-top:6px;align-items:center;">
+            <input id="eanNameInput" type="text" placeholder="Nom du produit (ex : MSI RTX 3080 Ti SUPRIM)"
+              style="flex:1;font-size:.8rem;padding:6px 8px;border:1px solid var(--border);border-radius:6px;">
+            <button type="button" onclick="rememberEanFromField('${raw}')"
+              style="background:var(--accent);color:#fff;border:0;border-radius:6px;padding:6px 12px;font-size:.8rem;cursor:pointer;">💾 Retenir ce nom</button>
+          </div>
+          <div style="font-size:.72rem;color:var(--muted);margin-top:4px;">Enregistré, le GPS retrouvera ce produit tout seul à chaque scan. Puis clique « 🔎 Chercher ».</div>`;
+      }
+    });
+    return;
+  } else if(looksAsin || /^X000/.test(raw)){
+    // ASIN (ex B0...) ou FNSKU d'emballage : ouvre directement la fiche produit
+    const asin = raw.replace(/[^A-Z0-9]/g,'');
+    document.getElementById('ean').value = raw;
+    msg.innerHTML = `<b>Code Amazon (FNSKU/ASIN) lu : ${raw}</b> — clique « 🔎 Chercher » : il ouvre la fiche produit directement avec ce code.`;
+    document.getElementById('lien').value = 'https://www.amazon.fr/dp/' + asin;
+  } else {
+    msg.innerHTML = `<b>Code lu : ${raw}</b> — impossible de le classer (EAN ou ASIN). Vérifie et remplis à la main.`;
+    document.getElementById('lien').value = 'https://www.amazon.fr/s?k=' + encodeURIComponent(raw);
+  }
+}
+/* ================= Memoire EAN -> nom (alimentable a la main) =================
+Les produits import/obsolètes ne sont pas dans les bases publiques. L'utilisateur
+trouve leur nom (emballage, Icecat, fabricant, revendeur archive) et l'enregistre
+dans le GPS : la prochaine fois, la resolution le retrouve instantanément.
+*/
+const EAN_MEM_KEY = 'gps_ean_memory_v1';
+let eanMemory = {};
+try { eanMemory = JSON.parse(localStorage.getItem(EAN_MEM_KEY) || '{}'); } catch(e){ eanMemory = {}; }
+function rememberEanName(ean, name){
+  eanMemory[ean] = name.trim();
+  try { localStorage.setItem(EAN_MEM_KEY, JSON.stringify(eanMemory)); } catch(e){}
+}
+function rememberEanFromField(ean){
+  const inp = document.getElementById('eanNameInput');
+  if(!inp) return;
+  const name = inp.value.trim();
+  if(!name){ inp.focus(); return; }
+  rememberEanName(ean, name);
+  document.getElementById('titre').value = name;
+  document.getElementById('lien').value = 'https://www.amazon.fr/s?k=' + encodeURIComponent(name);
+  const msg = document.getElementById('scanMsg');
+  msg.innerHTML = `<b>Code ${ean} retenu → ${name}</b>. La prochaine fois que tu le scanneras, le GPS le reconnaîtra. Clique « 🔎 Chercher » pour la recherche Amazon avec le nom.`;
+}
+function resolveEanName(ean){
+  // 1) memoire locale (manuelle) d'abord
+  if(eanMemory[ean]) return Promise.resolve(eanMemory[ean]);
+  // 2) base ouverte (openfoodfacts, CORS *)
+  return fetch('https://world.openfoodfacts.org/api/v2/product/' + ean + '.json', {cache:'no-store'})
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+      const p = d && d.product;
+      if(!p || p.status === 0) return null;
+      const name = p.product_name_fr || p.product_name || p.generic_name_fr || p.generic_name || null;
+      return (name && name.trim()) ? name.trim() : null;
+    })
+    .catch(() => null);
+}
+function searchAmazonEan(){
+  const ean = document.getElementById('ean').value.replace(/[^\d]/g,'');
+  if(!ean){ document.getElementById('scanMsg').textContent = 'Entre un code EAN d\'abord.'; return; }
+  if(!isValidEAN(ean)){
+    document.getElementById('scanMsg').textContent = 'Ce code ne semble pas etre un EAN valide (8 ou 13 chiffres).';
+    return;
+  }
+  const url = 'https://www.amazon.fr/s?k=' + ean;
+  document.getElementById('lien').value = url;
+  // si un titre est renseigne, on offre aussi la recherche par nom (souvent
+  // plus efficace qu'un EAN que Amazon.fr ne reconnait pas).
+  let titre = document.getElementById('titre').value.trim();
+  const msg = document.getElementById('scanMsg');
+  const build = (label, searchUrl) => {
+    const win = window.open(searchUrl, '_blank');
+    if(win){
+      msg.textContent = 'Recherche ouverte sur Amazon' + (label ? ' avec ' + label : ' avec le code ' + ean) + '. Regarde le prix de vente et remplis les champs.';
+    }else{
+      showLinkFallback(msg, url, 'L\'ouverture automatique est bloquée. Copie un lien et colle-le dans la barre d\'adresse : celui par CODE EAN, ou (recommandé) celui par NOM DU PRODUIT.', label ? {url: searchUrl} : null);
+    }
+  };
+  if(titre){ build('le nom du produit', 'https://www.amazon.fr/s?k=' + encodeURIComponent(titre)); return; }
+  // pas de titre : on tente de resoudre le nom du produit depuis le code EAN
+  msg.textContent = 'Recherche du nom du produit pour le code ' + ean + '...';
+  resolveEanName(ean).then(name=>{
+    if(name){
+      document.getElementById('titre').value = name;
+      build('le nom du produit', 'https://www.amazon.fr/s?k=' + encodeURIComponent(name));
+    }else{
+      msg.textContent = 'Nom introuvable pour ce code (base ouverte). Copie le lien, ou saisis toi-meme le nom du produit dans le champ Titre puis reclique « 🔎 Chercher ».';
+      showLinkFallback(msg, url, 'Code EAN inconnu de la base : copie ce lien (mode code), ou renseigne le nom du produit dans le champ Titre pour une meilleure recherche.');
+    }
+  });
+}
+function showLinkFallback(container, url, intro, extraUrl){
+  // Affiche un ou plusieurs champs URL (EAN + éventuellement nom produit),
+  // sélectionnables + copie en un clic. Fiable partout (aperçu, local, mobile).
+  container.className='fetchmsg info';
+  const options = [{label:'Code EAN', url}];
+  if(extraUrl && extraUrl.url){ options.push({label:'Nom du produit', url: extraUrl.url}); }
+  container.innerHTML = `
+    <div style="font-size:.85rem;margin-bottom:4px;">${intro}</div>
+    ${options.map(o=>`
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+        <span style="font-size:.72rem;color:var(--muted);white-space:nowrap;">${o.label}</span>
+        <input type="text" readonly value="${o.url}"
+          style="flex:1;font-size:.8rem;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"
+          onclick="this.select()">
+        <button type="button" onclick="copyLink(this)"
+          style="background:var(--accent);color:#fff;border:0;border-radius:6px;padding:6px 12px;font-size:.8rem;cursor:pointer;">Copier</button>
+      </div>`).join('')}
+    <div style="font-size:.72rem;color:var(--muted);margin-top:4px;">Clique dans un champ pour tout sélectionner, puis Ctrl+C (ou le bouton Copier). Colle ensuite dans la barre d'adresse.</div>`;
+}
+function copyLink(btn){
+  // IMPORTANT : le champ est dans le conteneur parent du bouton, pas "previousSibling"
+  // (previousSibling peut etre un noeud de texte vide -> lien jamais copie).
+  const input = btn.closest('div').querySelector('input');
+  if(!input || !input.value) return;
+  input.focus(); input.select();
+  let ok = false;
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(input.value);
+      ok = true;
+    }
+  }catch(e){}
+  if(!ok){
+    try{ document.execCommand('copy'); ok = true; }catch(e){}
+  }
+  const old = btn.textContent;
+  btn.textContent = ok ? 'Copié ✓' : 'Copie avec Ctrl+C';
+  setTimeout(()=>{ btn.textContent = old; }, 2000);
+}
+
+document.addEventListener('input', e=>{
+  if(e.target.closest('.rate-item')) return;
+  if(['prixA','prixV','note','vendeurs','bsr','fraisLog','fraisDivers','margeCible','noteMini','gated','amazonSur','pxDE','pxIT','cat'].includes(e.target.id)) calc();
+});
+document.getElementById('url').addEventListener('keydown', e=>{ if(e.key==='Enter') openAmazon(); });
+initCat(); renderRates(); renderHist();
+autoUpdateTaux(true);
+</script>
+</body>
+</html>
