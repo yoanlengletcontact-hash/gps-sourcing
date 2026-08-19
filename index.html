@@ -742,8 +742,17 @@ trouve leur nom (emballage, Icecat, fabricant, revendeur archive) et l'enregistr
 dans le GPS : la prochaine fois, la resolution le retrouve instantanément.
 */
 const EAN_MEM_KEY = 'gps_ean_memory_v1';
+// Table de correspondances par defaut (mise a jour par Orion au fil des identifications).
+// Ces entrees servent de base ; une saisie manuelle ultérieure écrase la valeur.
+const EAN_DEFAULT_MEM = {
+  '4719072813390': 'MSI GeForce RTX 3080 Ti SUPRIM X 12G'
+};
 let eanMemory = {};
 try { eanMemory = JSON.parse(localStorage.getItem(EAN_MEM_KEY) || '{}'); } catch(e){ eanMemory = {}; }
+// fusionne les entrees par defaut non encore presentes
+Object.keys(EAN_DEFAULT_MEM).forEach(k=>{
+  if(!eanMemory[k]) eanMemory[k] = EAN_DEFAULT_MEM[k];
+});
 function rememberEanName(ean, name){
   eanMemory[ean] = name.trim();
   try { localStorage.setItem(EAN_MEM_KEY, JSON.stringify(eanMemory)); } catch(e){}
@@ -760,18 +769,30 @@ function rememberEanFromField(ean){
   msg.innerHTML = `<b>Code ${ean} retenu → ${name}</b>. La prochaine fois que tu le scanneras, le GPS le reconnaîtra. Clique « 🔎 Chercher » pour la recherche Amazon avec le nom.`;
 }
 function resolveEanName(ean){
-  // 1) memoire locale (manuelle) d'abord
+  // 1) memoire locale (manuelle) d'abord : c'est la source la plus fiable
   if(eanMemory[ean]) return Promise.resolve(eanMemory[ean]);
-  // 2) base ouverte (openfoodfacts, CORS *)
-  return fetch('https://world.openfoodfacts.org/api/v2/product/' + ean + '.json', {cache:'no-store'})
-    .then(r => r.ok ? r.json() : null)
-    .then(d => {
-      const p = d && d.product;
-      if(!p || p.status === 0) return null;
-      const name = p.product_name_fr || p.product_name || p.generic_name_fr || p.generic_name || null;
-      return (name && name.trim()) ? name.trim() : null;
-    })
-    .catch(() => null);
+  // 2) interroge plusieurs bases ouvertes en cascade (CORS * verifie)
+  //    openfoodfacts = alimentaire, openproductsfacts = produits generaux,
+  //    openbeautyfacts = cosmetiques, openpetfoodsfacts = petfood.
+  const bases = [
+    'world.openfoodfacts.org',
+    'world.openproductsfacts.org',
+    'world.openbeautyfacts.org',
+    'world.openpetfoodsfacts.org'
+  ];
+  const tryBase = (i) => {
+    if(i >= bases.length) return Promise.resolve(null);
+    return fetch('https://' + bases[i] + '/api/v2/product/' + ean + '.json', {cache:'no-store'})
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        const p = d && d.product;
+        if(!p || d.status === 0) return tryBase(i+1);
+        const name = p.product_name_fr || p.product_name || p.generic_name_fr || p.generic_name || null;
+        return (name && name.trim()) ? name.trim() : tryBase(i+1);
+      })
+      .catch(() => tryBase(i+1));
+  };
+  return tryBase(0);
 }
 function searchAmazonEan(){
   const ean = document.getElementById('ean').value.replace(/[^\d]/g,'');
